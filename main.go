@@ -31,12 +31,14 @@ func main() {
 		errorLogger.Fatal(err.Error())
 		return
 	} else {
+		defer file.Close()
 		decoder := json.NewDecoder(file)
 		err = decoder.Decode(&configuration)
 		if err != nil {
 			errorLogger.Println(err.Error())
 			return
 		}
+		file.Close()
 	}
 
 	// evaluate command line flags
