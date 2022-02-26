@@ -11,6 +11,8 @@ import (
 	"os"
 )
 
+const configFile = "config.json"
+
 // Configuration is the struct that gets filled by reading config.json JSON file
 type Configuration struct {
 	VerboseOutput bool   `json:"verbose"`
@@ -18,32 +20,36 @@ type Configuration struct {
 	MaxPages      int    `json:"max_pages"`
 }
 
-func main() {
-	errorLogger := log.New(os.Stderr, "Error: ", 0)
-	debugLogger := log.New(io.Discard, "", 0)
-
+func initConfig() (configuration Configuration, err error) {
 	// get configuration from config json
-	var configuration Configuration
-	configFile := "config.json"
 	file, err := os.Open(configFile)
 	if err != nil {
-		// remove Fatal() in case config JSON file is optional
-		errorLogger.Fatal(err.Error())
-		return
+		return configuration, err
 	} else {
 		defer file.Close()
 		decoder := json.NewDecoder(file)
 		err = decoder.Decode(&configuration)
 		if err != nil {
-			errorLogger.Println(err.Error())
-			return
+			return configuration, err
 		}
-		file.Close()
+	}
+
+	return configuration, nil
+}
+
+func main() {
+	errorLogger := log.New(os.Stderr, "Error: ", 0)
+	debugLogger := log.New(io.Discard, "", 0)
+
+	configuration, err := initConfig()
+	if err != nil {
+		// remove Fatal() in case config JSON file is optional
+		errorLogger.Fatal(err.Error())
 	}
 
 	// evaluate command line flags
 	var help bool
-	flags := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	flags := flag.NewFlagSet("golang_cli_template", flag.ContinueOnError)
 	flags.BoolVar(&help, "help", help, "Show this help message")
 	flags.BoolVar(&help, "h", help, "")
 	if len(os.Args) < 2 {
@@ -64,22 +70,23 @@ func main() {
 		os.Exit(0)
 	}
 
+	// check for mandatory configuration variables
 	if configuration.ApiKey == "" {
 		errorLogger.Println("No API key set. Please set api_key in config json.")
-		printHelp(flags)
 		os.Exit(1)
 	}
 
+	// execute functions for commands
 	switch os.Args[1] {
 	case "command1":
 		os.Exit(Command1(os.Args[2:], configuration, errorLogger, debugLogger))
 	case "command2":
 		os.Exit(Command2(os.Args[2:], configuration, errorLogger, debugLogger))
+	default:
+		// no command given
+		errorLogger.Println("invalid command or command missing")
+		os.Exit(1)
 	}
-
-	errorLogger.Println("invalid command or command missing")
-	printHelp(flags)
-	os.Exit(1)
 }
 
 func printHelp(flags *flag.FlagSet) {

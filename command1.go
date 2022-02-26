@@ -42,7 +42,6 @@ func Command1(arguments []string, configuration Configuration, errorLogger *log.
 	args := flags.Args()
 	if len(args) < 1 {
 		errorLogger.Println("No parameters given!")
-		printCommandHelp(flags)
 		os.Exit(1)
 	}
 	param1 := args[0]
