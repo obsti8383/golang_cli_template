@@ -25,13 +25,12 @@ func initConfig() (configuration Configuration, err error) {
 	file, err := os.Open(configFile)
 	if err != nil {
 		return configuration, err
-	} else {
-		defer file.Close()
-		decoder := json.NewDecoder(file)
-		err = decoder.Decode(&configuration)
-		if err != nil {
-			return configuration, err
-		}
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&configuration)
+	if err != nil {
+		return configuration, err
 	}
 
 	return configuration, nil
